@@ -72,7 +72,7 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
             {currentQuestion ? (
               <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
                 <p className="text-lg font-medium text-foreground leading-relaxed">
-                  {currentQuestion.question}
+                  {currentQuestion.text}
                 </p>
                 <div className="mt-4 flex items-center gap-2">
                   <span className="inline-flex items-center gap-1">
@@ -101,7 +101,7 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
             {ratingMetrics && lastQuestion ? (
               <div className="space-y-6">
                 <p className="text-base font-medium text-foreground leading-relaxed">
-                  "{lastQuestion.question}"
+                  "{lastQuestion.text}"
                 </p>
 
                 {/* Rating Metrics */}

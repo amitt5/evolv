@@ -3,7 +3,8 @@ import type { Question, Speaker } from '@/types';
 export const INITIAL_QUESTIONS: Question[] = [
   {
     id: 1,
-    question: 'Tell me about a time you led a project through a crisis.',
+    text: 'Tell me about a time you led a project through a crisis.',
+    strength: 'strong',
     baselineScore: 72,
     score: 72,
     status: 'ACTIVE',
@@ -11,7 +12,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 2,
-    question: 'How do you handle conflicts within your team?',
+    text: 'How do you handle conflicts within your team?',
+    strength: 'medium',
     baselineScore: 68,
     score: 68,
     status: 'ACTIVE',
@@ -19,7 +21,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 3,
-    question: 'Describe your approach to professional development.',
+    text: 'Describe your approach to professional development.',
+    strength: 'strong',
     baselineScore: 75,
     score: 75,
     status: 'ACTIVE',
@@ -27,7 +30,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 4,
-    question: 'What metrics do you use to measure success?',
+    text: 'What metrics do you use to measure success?',
+    strength: 'medium',
     baselineScore: 70,
     score: 70,
     status: 'ACTIVE',
@@ -35,7 +39,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 5,
-    question: 'How do you adapt to changing market conditions?',
+    text: 'How do you adapt to changing market conditions?',
+    strength: 'strong',
     baselineScore: 73,
     score: 73,
     status: 'ACTIVE',
@@ -43,7 +48,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 6,
-    question: 'Tell me about your greatest achievement.',
+    text: 'Tell me about your greatest achievement.',
+    strength: 'weak',
     baselineScore: 76,
     score: 76,
     status: 'ACTIVE',
@@ -51,7 +57,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 7,
-    question: 'How do you stay updated with industry trends?',
+    text: 'How do you stay updated with industry trends?',
+    strength: 'weak',
     baselineScore: 65,
     score: 65,
     status: 'ACTIVE',
@@ -59,7 +66,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 8,
-    question: 'Describe your leadership philosophy.',
+    text: 'Describe your leadership philosophy.',
+    strength: 'medium',
     baselineScore: 71,
     score: 71,
     status: 'ACTIVE',
@@ -67,7 +75,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 9,
-    question: 'How do you build trust with your team?',
+    text: 'How do you build trust with your team?',
+    strength: 'strong',
     baselineScore: 74,
     score: 74,
     status: 'ACTIVE',
@@ -75,7 +84,8 @@ export const INITIAL_QUESTIONS: Question[] = [
   },
   {
     id: 10,
-    question: 'What attracted you to this opportunity?',
+    text: 'What attracted you to this opportunity?',
+    strength: 'weak',
     baselineScore: 69,
     score: 69,
     status: 'ACTIVE',

@@ -1,6 +1,7 @@
 export interface Question {
   id: number;
-  question: string;
+  text: string;
+  strength: 'weak' | 'medium' | 'strong';
   baselineScore: number;
   score: number;
   status: 'ACTIVE' | 'RETIRED' | 'NEW';

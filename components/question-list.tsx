@@ -56,7 +56,7 @@ export function QuestionList({ questions }: QuestionListProps) {
                 className="border-b border-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <td className="px-4 py-3 font-bold text-foreground">{index + 1}</td>
-                <td className="px-4 py-3 text-foreground line-clamp-2">{question.question}</td>
+                <td className="px-4 py-3 text-foreground line-clamp-2">{question.text}</td>
                 <td className="px-4 py-3 text-center text-foreground font-mono">
                   {formatScore(question.lastScore)}
                 </td>
