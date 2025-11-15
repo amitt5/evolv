@@ -9,9 +9,11 @@ interface CallPanelProps {
   lastQuestion: Question | undefined;
   ratingMetrics: RatingMetrics | null;
   showRating: boolean;
+  onEndCall?: () => void;
+  isConnected?: boolean;
 }
 
-export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMetrics, showRating }: CallPanelProps) {
+export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMetrics, showRating, onEndCall, isConnected }: CallPanelProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -131,11 +133,21 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
 
       {/* Footer Status */}
       <div className="mt-8 pt-6 border-t border-border">
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">CALL STATUS</p>
-          <p className="text-sm font-semibold text-foreground mt-1">
-            {questionId ? (showRating ? 'Rating Response' : 'Question Asked') : 'Completed'}
-          </p>
+        <div className="text-center space-y-4">
+          <div>
+            <p className="text-xs text-muted-foreground">CALL STATUS</p>
+            <p className="text-sm font-semibold text-foreground mt-1">
+              {isConnected ? (questionId ? (showRating ? 'Rating Response' : 'Question Asked') : 'Connected') : 'Disconnected'}
+            </p>
+          </div>
+          {onEndCall && (
+            <button
+              onClick={onEndCall}
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              End Call
+            </button>
+          )}
         </div>
       </div>
     </div>
