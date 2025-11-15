@@ -1,0 +1,90 @@
+import type { Question, Speaker } from '@/types';
+
+export const INITIAL_QUESTIONS: Question[] = [
+  {
+    id: 1,
+    question: 'Tell me about a time you led a project through a crisis.',
+    baselineScore: 72,
+    score: 72,
+    status: 'ACTIVE',
+    lastScore: 72,
+  },
+  {
+    id: 2,
+    question: 'How do you handle conflicts within your team?',
+    baselineScore: 68,
+    score: 68,
+    status: 'ACTIVE',
+    lastScore: 68,
+  },
+  {
+    id: 3,
+    question: 'Describe your approach to professional development.',
+    baselineScore: 75,
+    score: 75,
+    status: 'ACTIVE',
+    lastScore: 75,
+  },
+  {
+    id: 4,
+    question: 'What metrics do you use to measure success?',
+    baselineScore: 70,
+    score: 70,
+    status: 'ACTIVE',
+    lastScore: 70,
+  },
+  {
+    id: 5,
+    question: 'How do you adapt to changing market conditions?',
+    baselineScore: 73,
+    score: 73,
+    status: 'ACTIVE',
+    lastScore: 73,
+  },
+  {
+    id: 6,
+    question: 'Tell me about your greatest achievement.',
+    baselineScore: 76,
+    score: 76,
+    status: 'ACTIVE',
+    lastScore: 76,
+  },
+  {
+    id: 7,
+    question: 'How do you stay updated with industry trends?',
+    baselineScore: 65,
+    score: 65,
+    status: 'ACTIVE',
+    lastScore: 65,
+  },
+  {
+    id: 8,
+    question: 'Describe your leadership philosophy.',
+    baselineScore: 71,
+    score: 71,
+    status: 'ACTIVE',
+    lastScore: 71,
+  },
+  {
+    id: 9,
+    question: 'How do you build trust with your team?',
+    baselineScore: 74,
+    score: 74,
+    status: 'ACTIVE',
+    lastScore: 74,
+  },
+  {
+    id: 10,
+    question: 'What attracted you to this opportunity?',
+    baselineScore: 69,
+    score: 69,
+    status: 'ACTIVE',
+    lastScore: 69,
+  },
+];
+
+export const SPEAKERS: Speaker[] = [
+  { name: 'Alex Johnson', voice: 'Professional Male' },
+  { name: 'Sarah Chen', voice: 'Professional Female' },
+  { name: 'Michael Brown', voice: 'Professional Male' },
+];
