@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { QuestionList } from '@/components/question-list';
 import { CallPanel } from '@/components/call-panel';
 import type { Question, RatingMetrics } from '@/types';
 import { INITIAL_QUESTIONS } from '@/lib/data';
 import Vapi from '@vapi-ai/web';
+import { analyzeQuestionStatus } from '@/lib/question-analyzer';
 
 export default function Page() {
   const [callStarted, setCallStarted] = useState(false);
@@ -18,6 +19,99 @@ export default function Page() {
   const [isConnected, setIsConnected] = useState(false);
   const [vapiError, setVapiError] = useState<string | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
+  const [askedQuestions, setAskedQuestions] = useState<Set<number>>(new Set());
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+  const lastProcessedLengthRef = useRef<number>(0);
+  const conversationProcessingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const questionsRef = useRef<Question[]>(questions);
+
+  // Keep questions ref in sync with state
+  useEffect(() => {
+    questionsRef.current = questions;
+  }, [questions]);
+
+  // Process conversation updates with LLM analysis
+  const processConversationUpdate = useCallback(async (conversation: any[]) => {
+    if (!conversation || !Array.isArray(conversation) || conversation.length === 0) {
+      return;
+    }
+
+    // Only process if conversation has new messages
+    if (conversation.length <= lastProcessedLengthRef.current) {
+      return;
+    }
+
+    // Clear any pending timeout
+    if (conversationProcessingTimeoutRef.current) {
+      clearTimeout(conversationProcessingTimeoutRef.current);
+    }
+
+    // Debounce: wait 2 seconds after last update before processing
+    conversationProcessingTimeoutRef.current = setTimeout(async () => {
+      try {
+        // Get current question bank from ref (always latest)
+        const activeQuestions = questionsRef.current.filter((q) => q.status === 'active');
+        
+        if (activeQuestions.length === 0) {
+          console.log('No active questions to analyze');
+          return;
+        }
+
+        // Format question bank for analysis
+        const questionBank = activeQuestions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          strength: q.strength,
+        }));
+
+        console.log('🔍 Analyzing conversation with LLM...');
+        console.log('Conversation length:', conversation.length);
+        console.log('Question bank:', questionBank);
+
+        // Call LLM to analyze
+        const result = await analyzeQuestionStatus(conversation, questionBank);
+
+        // Log LLM response
+        console.log('✅ LLM Analysis Result:', {
+          askedQuestions: result.askedQuestions,
+          answeredQuestions: result.answeredQuestions,
+          askedCount: result.askedQuestions.length,
+          answeredCount: result.answeredQuestions.length,
+        });
+
+        // Update state
+        setAskedQuestions(new Set(result.askedQuestions));
+        setAnsweredQuestions(new Set(result.answeredQuestions));
+
+        // Update last processed length
+        lastProcessedLengthRef.current = conversation.length;
+
+        // Log which specific questions were asked/answered
+        if (result.askedQuestions.length > 0) {
+          const askedQuestionTexts = result.askedQuestions
+            .map((id) => {
+              const q = activeQuestions.find((q) => q.id === id);
+              return q ? `ID ${id}: "${q.text}"` : `ID ${id}`;
+            })
+            .join(', ');
+          console.log('📋 Asked Questions:', askedQuestionTexts);
+        }
+
+        if (result.answeredQuestions.length > 0) {
+          const answeredQuestionTexts = result.answeredQuestions
+            .map((id) => {
+              const q = activeQuestions.find((q) => q.id === id);
+              return q ? `ID ${id}: "${q.text}"` : `ID ${id}`;
+            })
+            .join(', ');
+          console.log('✅ Fully Answered Questions:', answeredQuestionTexts);
+        }
+      } catch (error) {
+        console.error('❌ Error processing conversation update:', error);
+        // Don't throw - just log the error so it doesn't break the app
+      }
+    }, 500); // 2 second debounce
+  }, []);
 
   // Initialize Vapi
   useEffect(() => {
@@ -45,13 +139,24 @@ export default function Page() {
       setIsConnected(false);
       setCallStarted(false);
       setIsSimulating(false);
+      // Clear any pending conversation processing
+      if (conversationProcessingTimeoutRef.current) {
+        clearTimeout(conversationProcessingTimeoutRef.current);
+        conversationProcessingTimeoutRef.current = null;
+      }
+      // Reset tracking
+      lastProcessedLengthRef.current = 0;
     });
 
     vapi.on('message', (message: any) => {
-      if(message.type === 'conversation-update'){
-        console.log('Conversation update111:', message.conversation);
+      if (message.type === 'conversation-update') {
+        console.log('Conversation update:', message.conversation);
+        // Process conversation to track asked/answered questions
+        if (message.conversation && Array.isArray(message.conversation)) {
+          processConversationUpdate(message.conversation);
+        }
       }
-      console.log('Message111:', message.type, message);
+      console.log('Message:', message.type, message);
       if (message.type === 'transcript') {
         console.log(`${message.role}: ${message.transcript}`);
         // You can process transcripts here if needed
@@ -73,12 +178,16 @@ export default function Page() {
 
     // Cleanup on unmount
     return () => {
+      if (conversationProcessingTimeoutRef.current) {
+        clearTimeout(conversationProcessingTimeoutRef.current);
+        conversationProcessingTimeoutRef.current = null;
+      }
       if (vapiRef.current) {
         vapiRef.current.stop();
         vapiRef.current = null;
       }
     };
-  }, []);
+  }, [processConversationUpdate]);
 
   // Simulation logic (can run alongside or instead of Vapi)
   useEffect(() => {
