@@ -124,8 +124,8 @@ export default function Page() {
           const lowestScore = updated.length > 0 ? updated[updated.length - 1].score : 100;
           if (lowestScore < 30) {
             return updated.map((q) =>
-              q.score === lowestScore && q.status === 'ACTIVE'
-                ? { ...q, status: 'RETIRED' }
+              q.score === lowestScore && q.status === 'active'
+                ? { ...q, status: 'retired' }
                 : q
             );
           }
@@ -162,14 +162,89 @@ export default function Page() {
       return;
     }
 
-    // Start Vapi call
+    // Get current questions state - ensure we're using the latest state
+    const activeQuestions = questions.filter((q) => q.status === 'active');
+    
+    // Validate that we have questions to send
+    if (activeQuestions.length === 0) {
+      setVapiError('No active questions available. Please ensure questions are marked as active.');
+      console.error('No active questions found. All questions:', questions);
+      return;
+    }
+
+    // Debug: Log the questions state before mapping
+    console.log('=== VAPI CALL START - Questions Debug ===');
+    console.log('Total questions in state:', questions.length);
+    console.log('Active questions count:', activeQuestions.length);
+    console.log('Questions state before mapping:', questions);
+    console.log('Active questions before mapping:', activeQuestions);
+
+    // Format questions for Vapi question_bank variable
+    // The prompt expects a JSON array with id (string) and text (string)
+    const questionBank = activeQuestions
+      .map((q) => {
+        // Validate question has required fields
+        if (!q.id || !q.text || q.text.trim() === '') {
+          console.warn('Skipping invalid question:', q);
+          return null;
+        }
+        
+        // Explicitly construct the object to ensure all properties are included
+        const mapped: { id: string; text: string; strength?: string } = {
+          id: String(q.id),
+          text: q.text.trim(), // Ensure text is always included and trimmed
+        };
+        if (q.strength) {
+          mapped.strength = q.strength;
+        }
+        console.log('Mapping question:', { id: q.id, text: q.text }, 'to:', mapped);
+        return mapped;
+      })
+      .filter((q): q is { id: string; text: string; strength?: string } => q !== null);
+
+    // Final validation
+    if (questionBank.length === 0) {
+      setVapiError('No valid questions to send. Please check your questions have valid text.');
+      console.error('No valid questions after mapping. Original questions:', activeQuestions);
+      return;
+    }
+
+    // Generate a unique cache-busting timestamp to prevent VAPI from using cached questions
+    const cacheBuster = Date.now();
+    const questionBankWithTimestamp = {
+      questions: questionBank,
+      timestamp: cacheBuster,
+      version: '1.0',
+    };
+
+    // Log the questions being sent to Vapi
+    console.log('=== Sending to VAPI ===');
+    console.log('Question bank array:', questionBank);
+    console.log('Question bank count:', questionBank.length);
+    console.log('Question bank JSON string:', JSON.stringify(questionBank));
+    console.log('Cache buster timestamp:', cacheBuster);
+    console.log('Full payload:', JSON.stringify(questionBankWithTimestamp));
+
+    // Start Vapi call with question_bank variable
+    // The prompt expects question_bank as a JSON array string
+    // We're passing both the question array and a cache-busting timestamp
     try {
-      vapiRef.current.start(assistantId);
+      vapiRef.current.start(assistantId, {
+        variableValues: {
+          // Pass the questions array as JSON string (primary format)
+          question_bank: JSON.stringify(questionBank),
+          // Add cache buster to force refresh and prevent using cached questions
+          cache_buster: String(cacheBuster),
+          // Also pass timestamp for additional cache prevention
+          timestamp: String(cacheBuster),
+        },
+      });
       setVapiError(null);
+      console.log('✅ VAPI call started successfully with', questionBank.length, 'questions');
       // Optionally start simulation alongside the call
       // setIsSimulating(true);
     } catch (error: any) {
-      console.error('Error starting Vapi call:', error);
+      console.error('❌ Error starting Vapi call:', error);
       setVapiError(error.message || 'Failed to start call');
     }
   };

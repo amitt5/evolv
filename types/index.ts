@@ -4,7 +4,7 @@ export interface Question {
   strength: 'weak' | 'medium' | 'strong';
   baselineScore: number;
   score: number;
-  status: 'ACTIVE' | 'RETIRED' | 'NEW';
+  status: 'active' | 'retired' | 'new';
   lastScore: number;
 }
 
