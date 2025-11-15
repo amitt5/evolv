@@ -6,7 +6,7 @@ import { CallPanel } from '@/components/call-panel';
 import type { Question, RatingMetrics } from '@/types';
 import { INITIAL_QUESTIONS } from '@/lib/data';
 import Vapi from '@vapi-ai/web';
-import { analyzeQuestionStatus } from '@/lib/question-analyzer';
+import { analyzeQuestionStatus, extractQuestionSegment, rateAnswer } from '@/lib/question-analyzer';
 
 export default function Page() {
   const [callStarted, setCallStarted] = useState(false);
@@ -24,6 +24,9 @@ export default function Page() {
   const lastProcessedLengthRef = useRef<number>(0);
   const conversationProcessingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const questionsRef = useRef<Question[]>(questions);
+  const previousAnsweredQuestionsRef = useRef<Set<number>>(new Set());
+  const conversationHistoryRef = useRef<any[]>([]);
+  const ratingInProgressRef = useRef<Set<number>>(new Set());
 
   // Keep questions ref in sync with state
   useEffect(() => {
@@ -68,6 +71,9 @@ export default function Page() {
         console.log('Conversation length:', conversation.length);
         console.log('Question bank:', questionBank);
 
+        // Store conversation history for segment extraction
+        conversationHistoryRef.current = conversation;
+
         // Call LLM to analyze
         const result = await analyzeQuestionStatus(conversation, questionBank);
 
@@ -79,9 +85,17 @@ export default function Page() {
           answeredCount: result.answeredQuestions.length,
         });
 
+        // Detect newly answered questions
+        const currentAnsweredSet = new Set(result.answeredQuestions);
+        const previousAnsweredSet = previousAnsweredQuestionsRef.current;
+        const newlyAnsweredQuestions = result.answeredQuestions.filter(
+          (id) => !previousAnsweredSet.has(id)
+        );
+
         // Update state
         setAskedQuestions(new Set(result.askedQuestions));
-        setAnsweredQuestions(new Set(result.answeredQuestions));
+        setAnsweredQuestions(currentAnsweredSet);
+        previousAnsweredQuestionsRef.current = currentAnsweredSet;
 
         // Update last processed length
         lastProcessedLengthRef.current = conversation.length;
@@ -105,6 +119,99 @@ export default function Page() {
             })
             .join(', ');
           console.log('✅ Fully Answered Questions:', answeredQuestionTexts);
+        }
+
+        // Rate newly answered questions
+        if (newlyAnsweredQuestions.length > 0) {
+          console.log('🎯 Newly answered questions detected:', newlyAnsweredQuestions);
+          
+          // Rate each newly answered question
+          for (const questionId of newlyAnsweredQuestions) {
+            // Skip if already rating this question
+            if (ratingInProgressRef.current.has(questionId)) {
+              continue;
+            }
+
+            const question = activeQuestions.find((q) => q.id === questionId);
+            if (!question) {
+              console.warn(`Question ${questionId} not found in active questions`);
+              continue;
+            }
+
+            // Mark as in progress
+            ratingInProgressRef.current.add(questionId);
+
+            // Extract conversation segment for this question
+            const segment = extractQuestionSegment(
+              conversation,
+              questionId,
+              question.text,
+              result.askedQuestions
+            );
+
+            if (segment.length === 0) {
+              console.warn(`Could not extract conversation segment for question ${questionId}`);
+              ratingInProgressRef.current.delete(questionId);
+              continue;
+            }
+
+            console.log(`📊 Rating question ${questionId}: "${question.text}"`);
+            console.log(`   Segment length: ${segment.length} messages`);
+
+            // Rate the answer
+            rateAnswer(question.text, questionId, segment)
+              .then((metrics: RatingMetrics) => {
+                console.log(`⭐ Rating for question ${questionId}:`, {
+                  specificity: metrics.specificity,
+                  depth: metrics.depth,
+                  behavioralEvidence: metrics.behavioralEvidence,
+                  novelty: metrics.novelty,
+                  overallScore: metrics.overallScore,
+                });
+
+                // Update question state with ratings
+                setQuestions((prev) => {
+                  const updated = prev
+                    .map((q) => {
+                      if (q.id === questionId) {
+                        const scoreBoost = metrics.overallScore;
+                        return {
+                          ...q,
+                          lastScore: q.score,
+                          score: Math.min(100, q.score + scoreBoost),
+                        };
+                      }
+                      return q;
+                    })
+                    .sort((a, b) => b.score - a.score);
+
+                  // Check for retirement
+                  const lowestScore = updated.length > 0 ? updated[updated.length - 1].score : 100;
+                  if (lowestScore < 30) {
+                    return updated.map((q) =>
+                      q.score === lowestScore && q.status === 'active'
+                        ? { ...q, status: 'retired' }
+                        : q
+                    );
+                  }
+
+                  return updated;
+                });
+
+                // Update UI to show rating for this question
+                setLastQuestionId(questionId);
+                setRatingMetrics(metrics);
+                setShowRating(true);
+                setCurrentQuestionId(null); // Clear current question since it's now answered
+
+                // Remove from in-progress
+                ratingInProgressRef.current.delete(questionId);
+              })
+              .catch((error) => {
+                console.error(`❌ Error rating question ${questionId}:`, error);
+                ratingInProgressRef.current.delete(questionId);
+              });
+          }
         }
       } catch (error) {
         console.error('❌ Error processing conversation update:', error);
@@ -146,6 +253,8 @@ export default function Page() {
       }
       // Reset tracking
       lastProcessedLengthRef.current = 0;
+      previousAnsweredQuestionsRef.current = new Set();
+      ratingInProgressRef.current.clear();
     });
 
     vapi.on('message', (message: any) => {
