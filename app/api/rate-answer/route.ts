@@ -55,28 +55,28 @@ Question Asked: "${questionText}"
 Conversation Segment (question and answer):
 ${JSON.stringify(conversationFormatted, null, 2)}
 
-Rate the answer on these 4 parameters (each on a scale of 0-10):
+Rate the answer on these 4 parameters (each on a scale of 0-100):
 
-1. **Specificity** (0-10): How specific and concrete is the answer? Does it provide clear details, numbers, names, dates, or specific examples rather than vague generalizations?
+1. **Specificity** (0-100): How specific and concrete is the answer? Does it provide clear details, numbers, names, dates, or specific examples rather than vague generalizations? Score from 0 (very vague) to 100 (highly specific with concrete details).
 
-2. **Depth** (0-10): How deep and thorough is the answer? Does it go beyond surface-level responses and provide meaningful elaboration, context, and detail?
+2. **Depth** (0-100): How deep and thorough is the answer? Does it go beyond surface-level responses and provide meaningful elaboration, context, and detail? Score from 0 (superficial) to 100 (very deep and comprehensive).
 
-3. **Behavioral Evidence** (0-10): Does the answer follow the STAR method (Situation, Task, Action, Result)? Does it provide concrete behavioral examples that demonstrate the candidate's skills and experiences?
+3. **Behavioral Evidence** (0-100): Does the answer follow the STAR method (Situation, Task, Action, Result)? Does it provide concrete behavioral examples that demonstrate the candidate's skills and experiences? Score from 0 (no behavioral evidence) to 100 (excellent STAR format with strong behavioral examples).
 
-4. **Novelty** (0-10): How unique or insightful is the answer? Does it provide fresh perspectives, unexpected insights, or demonstrate creative thinking beyond typical responses?
+4. **Novelty** (0-100): How unique or insightful is the answer? Does it provide fresh perspectives, unexpected insights, or demonstrate creative thinking beyond typical responses? Score from 0 (generic/typical) to 100 (highly unique and insightful).
 
-5. **Overall Insight Score** (0-10): A holistic assessment of the overall quality and value of the answer, considering all factors above.
+5. **Overall Insight Score** (0-100): A holistic assessment of the overall quality and value of the answer, considering all factors above. Score from 0 (poor) to 100 (excellent).
 
 Return your evaluation as a JSON object with this exact structure:
 {
-  "specificity": <number 0-10>,
-  "depth": <number 0-10>,
-  "behavioralEvidence": <number 0-10>,
-  "novelty": <number 0-10>,
-  "overallScore": <number 0-10>
+  "specificity": <number 0-100>,
+  "depth": <number 0-100>,
+  "behavioralEvidence": <number 0-100>,
+  "novelty": <number 0-100>,
+  "overallScore": <number 0-100>
 }
 
-Be precise with your ratings. Use decimal values if needed (e.g., 7.5, 8.2). Return ONLY valid JSON, no additional text or explanation.`;
+Be precise with your ratings. Use decimal values if needed (e.g., 75.5, 82.3). Return ONLY valid JSON, no additional text or explanation.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -125,11 +125,11 @@ Be precise with your ratings. Use decimal values if needed (e.g., 7.5, 8.2). Ret
 
     // Validate and normalize the response
     const ratingResult: RatingResult = {
-      specificity: Math.max(0, Math.min(10, Number(result.specificity) || 0)),
-      depth: Math.max(0, Math.min(10, Number(result.depth) || 0)),
-      behavioralEvidence: Math.max(0, Math.min(10, Number(result.behavioralEvidence) || 0)),
-      novelty: Math.max(0, Math.min(10, Number(result.novelty) || 0)),
-      overallScore: Math.max(0, Math.min(10, Number(result.overallScore) || 0)),
+      specificity: Math.max(0, Math.min(100, Number(result.specificity) || 0)),
+      depth: Math.max(0, Math.min(100, Number(result.depth) || 0)),
+      behavioralEvidence: Math.max(0, Math.min(100, Number(result.behavioralEvidence) || 0)),
+      novelty: Math.max(0, Math.min(100, Number(result.novelty) || 0)),
+      overallScore: Math.max(0, Math.min(100, Number(result.overallScore) || 0)),
     };
 
     return NextResponse.json(ratingResult);

@@ -39,7 +39,8 @@ export function CallPanel({
   }, [questionId]);
 
   const RatingBar = ({ label, score }: { label: string; score: number }) => {
-    const percentage = (score / 10) * 100;
+    // Score is now on a 0-100 scale, so percentage = score
+    const percentage = Math.min(100, Math.max(0, score));
     return (
       <div className="space-y-1">
         <div className="flex justify-between items-center">
