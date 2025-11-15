@@ -520,7 +520,7 @@ export default function Page() {
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="text-center space-y-6">
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Interview Ranker</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">Self evolving interview agent</h1>
                 <p className="text-muted-foreground">Live question ranking simulation</p>
               </div>
               {vapiError && (

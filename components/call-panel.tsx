@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Question, RatingMetrics } from '@/types';
 
 interface CallPanelProps {
@@ -15,6 +15,12 @@ interface CallPanelProps {
   answeredQuestions?: Set<number>;
   ratingInProgress?: Set<number>;
   questions?: Question[];
+  vapiTranscript?: Array<{
+    created_at: string;
+    sender_type?: string;
+    metadata?: { isVoice?: boolean };
+  }>;
+  isCallActive?: boolean;
 }
 
 export function CallPanel({
@@ -29,14 +35,168 @@ export function CallPanel({
   answeredQuestions = new Set(),
   ratingInProgress = new Set(),
   questions = [],
+  vapiTranscript = [],
+  isCallActive = false,
 }: CallPanelProps) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [voiceActivity, setVoiceActivity] = useState({
+    isUserSpeaking: false,
+    isAiSpeaking: false,
+    userLevel: 0,
+    aiLevel: 0
+  });
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const prevVoiceActivityRef = useRef(voiceActivity);
+  const vapiTranscriptRef = useRef(vapiTranscript);
+
+  // Sync refs with latest values
+  useEffect(() => {
+    prevVoiceActivityRef.current = voiceActivity;
+  }, [voiceActivity]);
+
+  useEffect(() => {
+    vapiTranscriptRef.current = vapiTranscript;
+  }, [vapiTranscript]);
 
   useEffect(() => {
     setIsAnimating(true);
     const timer = setTimeout(() => setIsAnimating(false), 300);
     return () => clearTimeout(timer);
   }, [questionId]);
+
+  // Calculate voice activity bar heights based on real voice activity
+  const getVoiceBarHeights = () => {
+    const { isUserSpeaking, isAiSpeaking, userLevel, aiLevel } = voiceActivity;
+    
+    if (!isUserSpeaking && !isAiSpeaking) {
+      // Silent state - all bars low
+      return [20, 25, 30, 25, 20];
+    }
+    
+    if (isUserSpeaking && isAiSpeaking) {
+      // Both speaking - mixed pattern
+      const userIntensity = Math.min(userLevel * 0.8, 1);
+      const aiIntensity = Math.min(aiLevel * 0.6, 1);
+      return [
+        30 + (userIntensity * 40),
+        40 + (aiIntensity * 35),
+        50 + (Math.max(userIntensity, aiIntensity) * 40),
+        40 + (aiIntensity * 35),
+        30 + (userIntensity * 40)
+      ];
+    }
+    
+    if (isUserSpeaking) {
+      // User speaking - higher activity
+      const intensity = Math.min(userLevel * 0.9, 1);
+      return [
+        40 + (intensity * 40),
+        50 + (intensity * 35),
+        60 + (intensity * 35),
+        50 + (intensity * 35),
+        40 + (intensity * 40)
+      ];
+    }
+    
+    if (isAiSpeaking) {
+      // AI speaking - moderate activity
+      const intensity = Math.min(aiLevel * 0.7, 1);
+      return [
+        25 + (intensity * 35),
+        35 + (intensity * 30),
+        45 + (intensity * 30),
+        35 + (intensity * 30),
+        25 + (intensity * 35)
+      ];
+    }
+    
+    return [20, 25, 30, 25, 20];
+  };
+
+  // Track voice activity based on VAPI events
+  useEffect(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!isCallActive && !isConnected) {
+      // Reset voice activity when call is not active
+      setVoiceActivity(prev => {
+        if (prev.isUserSpeaking || prev.isAiSpeaking || prev.userLevel > 0 || prev.aiLevel > 0) {
+          return {
+            isUserSpeaking: false,
+            isAiSpeaking: false,
+            userLevel: 0,
+            aiLevel: 0
+          };
+        }
+        return prev;
+      });
+      return;
+    }
+
+    // Listen to VAPI transcript events to detect voice activity
+    const handleVoiceActivity = () => {
+      // Check recent messages to determine who is speaking
+      const recentMessages = vapiTranscriptRef.current.slice(-3); // Last 3 messages
+      const now = Date.now();
+      const recentThreshold = 3000; // 3 seconds
+
+      let isUserSpeaking = false;
+      let isAiSpeaking = false;
+      let userLevel = 0;
+      let aiLevel = 0;
+
+      recentMessages.forEach((message: any) => {
+        const messageTime = new Date(message.created_at).getTime();
+        const isRecent = (now - messageTime) < recentThreshold;
+        
+        if (isRecent && message.metadata?.isVoice) {
+          if (message.sender_type === 'respondent') {
+            isUserSpeaking = true;
+            userLevel = Math.min(0.8 + Math.random() * 0.2, 1); // Simulate voice level
+          } else if (message.sender_type === 'moderator') {
+            isAiSpeaking = true;
+            aiLevel = Math.min(0.6 + Math.random() * 0.3, 1); // Simulate voice level
+          }
+        }
+      });
+
+      // Only update if values actually changed
+      const newVoiceActivity = {
+        isUserSpeaking,
+        isAiSpeaking,
+        userLevel,
+        aiLevel
+      };
+
+      const prev = prevVoiceActivityRef.current;
+      if (
+        prev.isUserSpeaking !== newVoiceActivity.isUserSpeaking ||
+        prev.isAiSpeaking !== newVoiceActivity.isAiSpeaking ||
+        Math.abs(prev.userLevel - newVoiceActivity.userLevel) > 0.1 ||
+        Math.abs(prev.aiLevel - newVoiceActivity.aiLevel) > 0.1
+      ) {
+        prevVoiceActivityRef.current = newVoiceActivity;
+        setVoiceActivity(newVoiceActivity);
+      }
+    };
+
+    // Update voice activity when messages change
+    handleVoiceActivity();
+
+    // Set up interval to update voice activity
+    intervalRef.current = setInterval(handleVoiceActivity, 500);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isCallActive, isConnected]); // Remove vapiTranscript from dependencies, use ref instead
 
   const RatingBar = ({ label, score }: { label: string; score: number }) => {
     // Score is now on a 0-100 scale, so percentage = score
@@ -82,13 +242,70 @@ export function CallPanel({
 
         <div className="flex-1 flex flex-col gap-6 overflow-y-auto">
           {/* Question Status Section */}
+
+          
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+          {/* Voice Activity Indicator */}
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              Interview Status
+              Voice Activity
             </p>
             
+            {/* Voice Activity Bars - only show when call is active */}
+            {(isCallActive || isConnected) && (
+              <div className="flex items-end justify-center space-x-2 h-20 mb-4">
+                {getVoiceBarHeights().map((height, index) => {
+                  const { isUserSpeaking, isAiSpeaking } = voiceActivity;
+                  let barColor = 'bg-purple-600 dark:bg-purple-500'; // Default color
+                  
+                  if (isUserSpeaking && !isAiSpeaking) {
+                    barColor = 'bg-red-500 dark:bg-red-400'; // User speaking - red
+                  } else if (isAiSpeaking && !isUserSpeaking) {
+                    barColor = 'bg-purple-600 dark:bg-purple-500'; // AI speaking - purple
+                  } else if (isUserSpeaking && isAiSpeaking) {
+                    barColor = 'bg-orange-500 dark:bg-orange-400'; // Both speaking - orange
+                  }
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className={`w-3 ${barColor} rounded-full transition-all duration-300 ease-in-out`}
+                      style={{ 
+                        height: `${height}%`
+                      }}
+                    ></div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Voice Activity Status */}
+            {(isCallActive || isConnected) && (
+              <div className="text-center mb-4">
+                {voiceActivity.isUserSpeaking && !voiceActivity.isAiSpeaking && (
+                  <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                    User Speaking
+                  </p>
+                )}
+                {voiceActivity.isAiSpeaking && !voiceActivity.isUserSpeaking && (
+                  <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">
+                    AI Moderator Speaking
+                  </p>
+                )}
+                {voiceActivity.isUserSpeaking && voiceActivity.isAiSpeaking && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                    Both Speaking
+                  </p>
+                )}
+                {!voiceActivity.isUserSpeaking && !voiceActivity.isAiSpeaking && (
+                  <p className="text-sm text-muted-foreground">
+                    Listening...
+                  </p>
+                )}
+              </div>
+            )}
+            
             {/* Asked Questions */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-foreground">Asked Questions</span>
                 <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
@@ -135,10 +352,10 @@ export function CallPanel({
               ) : (
                 <p className="text-sm text-muted-foreground">No questions asked yet</p>
               )}
-            </div>
+            </div> */}
 
             {/* Answered Questions */}
-            <div className="border-t border-border pt-4">
+            {/* <div className="border-t border-border pt-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-foreground">Answered Questions</span>
                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">
@@ -178,11 +395,11 @@ export function CallPanel({
               ) : (
                 <p className="text-sm text-muted-foreground">No questions answered yet</p>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Current Question Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+          {/* <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Current Question
             </p>
@@ -209,7 +426,7 @@ export function CallPanel({
                 <p className="text-muted-foreground">Interview starting...</p>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Analysis Results Section */}
           {showRating && ratingMetrics && lastQuestion && (

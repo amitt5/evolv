@@ -28,7 +28,7 @@ export function QuestionList({ questions }: QuestionListProps) {
     <div className="flex-1 bg-white dark:bg-slate-900 border-l border-border flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700">
-        <h2 className="text-xl font-bold text-foreground">Question Rankings</h2>
+        <h2 className="text-xl font-bold text-foreground">Question Brain</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Real-time effectiveness scores
         </p>
