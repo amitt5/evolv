@@ -48,6 +48,10 @@ export default function Page() {
     });
 
     vapi.on('message', (message: any) => {
+      if(message.type === 'conversation-update'){
+        console.log('Conversation update111:', message.conversation);
+      }
+      console.log('Message111:', message.type, message);
       if (message.type === 'transcript') {
         console.log(`${message.role}: ${message.transcript}`);
         // You can process transcripts here if needed
@@ -218,12 +222,12 @@ export default function Page() {
     };
 
     // Log the questions being sent to Vapi
-    console.log('=== Sending to VAPI ===');
-    console.log('Question bank array:', questionBank);
-    console.log('Question bank count:', questionBank.length);
-    console.log('Question bank JSON string:', JSON.stringify(questionBank));
-    console.log('Cache buster timestamp:', cacheBuster);
-    console.log('Full payload:', JSON.stringify(questionBankWithTimestamp));
+    // console.log('=== Sending to VAPI ===');
+    // console.log('Question bank array:', questionBank);
+    // console.log('Question bank count:', questionBank.length);
+    // console.log('Question bank JSON string:', JSON.stringify(questionBank));
+    // console.log('Cache buster timestamp:', cacheBuster);
+    // console.log('Full payload:', JSON.stringify(questionBankWithTimestamp));
 
     // Start Vapi call with question_bank variable
     // The prompt expects question_bank as a JSON array string
