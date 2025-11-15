@@ -177,16 +177,25 @@ export default function Page() {
                   overallScore: metrics.overallScore,
                 });
 
-                // Update question state with ratings
+                // Update question state with ratings using weighted average
                 setQuestions((prev) => {
                   const updated = prev
                     .map((q) => {
                       if (q.id === questionId) {
-                        const scoreBoost = metrics.overallScore;
+                        const newRating = metrics.overallScore;
+                        const currentRatingCount = q.ratingCount || 0;
+                        const currentScore = q.score;
+                        
+                        // Calculate weighted average: (ratingCount * currentScore + newRating) / (ratingCount + 1)
+                        const newScore = currentRatingCount === 0
+                          ? newRating // First rating
+                          : (currentRatingCount * currentScore + newRating) / (currentRatingCount + 1);
+                        
                         return {
                           ...q,
                           lastScore: q.score,
-                          score: Math.min(100, q.score + scoreBoost),
+                          score: Math.min(100, Math.max(0, newScore)), // Cap between 0-100
+                          ratingCount: currentRatingCount + 1,
                         };
                       }
                       return q;
@@ -327,10 +336,10 @@ export default function Page() {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const metrics: RatingMetrics = {
-          specificity: Math.random() * 10,
-          depth: Math.random() * 10,
-          behavioralEvidence: Math.random() * 10,
-          novelty: Math.random() * 10,
+          specificity: Math.random() * 100,
+          depth: Math.random() * 100,
+          behavioralEvidence: Math.random() * 100,
+          novelty: Math.random() * 100,
           overallScore: 0,
         };
         metrics.overallScore = (metrics.specificity + metrics.depth + metrics.behavioralEvidence + metrics.novelty) / 4;
@@ -343,11 +352,20 @@ export default function Page() {
           const updated = prev
             .map((q) => {
               if (q.id === currentQuestion.id) {
-                const scoreBoost = metrics.overallScore;
+                const newRating = metrics.overallScore;
+                const currentRatingCount = q.ratingCount || 0;
+                const currentScore = q.score;
+                
+                // Calculate weighted average: (ratingCount * currentScore + newRating) / (ratingCount + 1)
+                const newScore = currentRatingCount === 0
+                  ? newRating // First rating
+                  : (currentRatingCount * currentScore + newRating) / (currentRatingCount + 1);
+                
                 return {
                   ...q,
                   lastScore: q.score,
-                  score: Math.min(100, q.score + scoreBoost),
+                  score: Math.min(100, Math.max(0, newScore)), // Cap between 0-100
+                  ratingCount: currentRatingCount + 1,
                 };
               }
               return q;

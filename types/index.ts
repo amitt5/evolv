@@ -6,6 +6,7 @@ export interface Question {
   score: number;
   status: 'active' | 'retired' | 'new';
   lastScore: number;
+  ratingCount: number;
 }
 
 export interface RatingMetrics {

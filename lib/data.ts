@@ -9,6 +9,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 72,
     status: 'active',
     lastScore: 72,
+    ratingCount: 8,
   },
   {
     id: 2,
@@ -18,6 +19,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 68,
     status: 'active',
     lastScore: 68,
+    ratingCount: 8,
   },
   {
     id: 3,
@@ -27,6 +29,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 75,
     status: 'active',
     lastScore: 75,
+    ratingCount: 8,
   },
   {
     id: 4,
@@ -36,6 +39,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 70,
     status: 'active',
     lastScore: 70,
+    ratingCount: 8,
   },
   {
     id: 5,
@@ -45,6 +49,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 73,
     status: 'active',
     lastScore: 73,
+    ratingCount: 8,
   },
   {
     id: 6,
@@ -54,6 +59,7 @@ export const INITIAL_QUESTIONS: Question[] = [
     score: 76,
     status: 'active',
     lastScore: 76,
+    ratingCount: 8,
   },
   // {
   //   id: 7,
