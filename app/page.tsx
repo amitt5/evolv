@@ -21,17 +21,23 @@ export default function Page() {
   const vapiRef = useRef<Vapi | null>(null);
   const [askedQuestions, setAskedQuestions] = useState<Set<number>>(new Set());
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+  const [ratingInProgress, setRatingInProgress] = useState<Set<number>>(new Set());
+  const ratingInProgressRef = useRef<Set<number>>(new Set());
   const lastProcessedLengthRef = useRef<number>(0);
   const conversationProcessingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const questionsRef = useRef<Question[]>(questions);
   const previousAnsweredQuestionsRef = useRef<Set<number>>(new Set());
   const conversationHistoryRef = useRef<any[]>([]);
-  const ratingInProgressRef = useRef<Set<number>>(new Set());
 
   // Keep questions ref in sync with state
   useEffect(() => {
     questionsRef.current = questions;
   }, [questions]);
+
+  // Keep ratingInProgress ref in sync with state
+  useEffect(() => {
+    ratingInProgressRef.current = ratingInProgress;
+  }, [ratingInProgress]);
 
   // Process conversation updates with LLM analysis
   const processConversationUpdate = useCallback(async (conversation: any[]) => {
@@ -140,6 +146,7 @@ export default function Page() {
 
             // Mark as in progress
             ratingInProgressRef.current.add(questionId);
+            setRatingInProgress(new Set(ratingInProgressRef.current));
 
             // Extract conversation segment for this question
             const segment = extractQuestionSegment(
@@ -152,6 +159,7 @@ export default function Page() {
             if (segment.length === 0) {
               console.warn(`Could not extract conversation segment for question ${questionId}`);
               ratingInProgressRef.current.delete(questionId);
+              setRatingInProgress(new Set(ratingInProgressRef.current));
               continue;
             }
 
@@ -206,10 +214,12 @@ export default function Page() {
 
                 // Remove from in-progress
                 ratingInProgressRef.current.delete(questionId);
+                setRatingInProgress(new Set(ratingInProgressRef.current));
               })
               .catch((error) => {
                 console.error(`❌ Error rating question ${questionId}:`, error);
                 ratingInProgressRef.current.delete(questionId);
+                setRatingInProgress(new Set(ratingInProgressRef.current));
               });
           }
         }
@@ -255,6 +265,7 @@ export default function Page() {
       lastProcessedLengthRef.current = 0;
       previousAnsweredQuestionsRef.current = new Set();
       ratingInProgressRef.current.clear();
+      setRatingInProgress(new Set());
     });
 
     vapi.on('message', (message: any) => {
@@ -518,6 +529,10 @@ export default function Page() {
           showRating={showRating}
           onEndCall={handleEndCall}
           isConnected={isConnected}
+          askedQuestions={askedQuestions}
+          answeredQuestions={answeredQuestions}
+          ratingInProgress={ratingInProgress}
+          questions={questions}
         />
       )}
 

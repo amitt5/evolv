@@ -11,9 +11,25 @@ interface CallPanelProps {
   showRating: boolean;
   onEndCall?: () => void;
   isConnected?: boolean;
+  askedQuestions?: Set<number>;
+  answeredQuestions?: Set<number>;
+  ratingInProgress?: Set<number>;
+  questions?: Question[];
 }
 
-export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMetrics, showRating, onEndCall, isConnected }: CallPanelProps) {
+export function CallPanel({
+  questionId,
+  currentQuestion,
+  lastQuestion,
+  ratingMetrics,
+  showRating,
+  onEndCall,
+  isConnected,
+  askedQuestions = new Set(),
+  answeredQuestions = new Set(),
+  ratingInProgress = new Set(),
+  questions = [],
+}: CallPanelProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -63,14 +79,114 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col gap-8 overflow-y-auto">
-          {/* Top Section: Current Question */}
-          <div className="flex-1">
+        <div className="flex-1 flex flex-col gap-6 overflow-y-auto">
+          {/* Question Status Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+              Interview Status
+            </p>
+            
+            {/* Asked Questions */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Asked Questions</span>
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  {askedQuestions.size}
+                </span>
+              </div>
+              {askedQuestions.size > 0 ? (
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {Array.from(askedQuestions)
+                    .map((id) => {
+                      const question = questions.find((q) => q.id === id);
+                      const isAnswered = answeredQuestions.has(id);
+                      const isAnalyzing = ratingInProgress.has(id);
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-start gap-2 text-sm p-2 rounded bg-slate-50 dark:bg-slate-700/50"
+                        >
+                          <span className="flex-shrink-0 mt-0.5">
+                            {isAnalyzing ? (
+                              <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                            ) : isAnswered ? (
+                              <span className="w-2 h-2 bg-green-500 rounded-full" />
+                            ) : (
+                              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                            )}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-foreground truncate">
+                              {question ? question.text : `Question ${id}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {isAnalyzing
+                                ? 'Analyzing answer...'
+                                : isAnswered
+                                  ? 'Answered'
+                                  : 'Waiting for answer'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No questions asked yet</p>
+              )}
+            </div>
+
+            {/* Answered Questions */}
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Answered Questions</span>
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {answeredQuestions.size}
+                </span>
+              </div>
+              {answeredQuestions.size > 0 ? (
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {Array.from(answeredQuestions)
+                    .map((id) => {
+                      const question = questions.find((q) => q.id === id);
+                      const isAnalyzing = ratingInProgress.has(id);
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-start gap-2 text-sm p-2 rounded bg-green-50 dark:bg-green-900/20"
+                        >
+                          <span className="flex-shrink-0 mt-0.5">
+                            {isAnalyzing ? (
+                              <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                            ) : (
+                              <span className="w-2 h-2 bg-green-500 rounded-full" />
+                            )}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-foreground truncate">
+                              {question ? question.text : `Question ${id}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {isAnalyzing ? 'Analyzing...' : 'Analysis complete'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No questions answered yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Current Question Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Current Question
             </p>
             {currentQuestion ? (
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+              <div>
                 <p className="text-lg font-medium text-foreground leading-relaxed">
                   {currentQuestion.text}
                 </p>
@@ -83,22 +199,23 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
                   </span>
                 </div>
               </div>
+            ) : askedQuestions.size > 0 ? (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Waiting for next question...</p>
+              </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Simulation complete</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  All questions have been ranked
-                </p>
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Interview starting...</p>
               </div>
             )}
           </div>
 
-          {/* Bottom Section: Question Just Answered with Ratings */}
-          <div className="flex-1 border-t border-border pt-8">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              Question Just Answered
-            </p>
-            {ratingMetrics && lastQuestion ? (
+          {/* Analysis Results Section */}
+          {showRating && ratingMetrics && lastQuestion && (
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                Latest Analysis Result
+              </p>
               <div className="space-y-6">
                 <p className="text-base font-medium text-foreground leading-relaxed">
                   "{lastQuestion.text}"
@@ -122,12 +239,20 @@ export function CallPanel({ questionId, currentQuestion, lastQuestion, ratingMet
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Waiting for first response rating...</p>
+            </div>
+          )}
+
+          {/* Analysis In Progress Indicator */}
+          {ratingInProgress.size > 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Analyzing {ratingInProgress.size} answer{ratingInProgress.size > 1 ? 's' : ''}...
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
