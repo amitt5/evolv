@@ -516,22 +516,26 @@ export default function Page() {
     <div className="flex h-screen bg-background">
       {/* Left Panel: Call Display with Rating */}
       {!callStarted ? (
-        <div className="flex-1 border-r border-border bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 flex flex-col p-8">
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="text-center space-y-6">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-2">Self evolving interview agent</h1>
-                <p className="text-muted-foreground">Live question ranking simulation</p>
+        <div className="flex-1 border-r border-border/50 bg-background flex flex-col p-12">
+          <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full">
+            <div className="text-center space-y-8 w-full">
+              <div className="mb-12 space-y-4">
+                <h1 className="text-6xl md:text-7xl font-bold text-foreground mb-4 tracking-tight">
+                  Self evolving interview agent
+                </h1>
+                <p className="text-lg md:text-xl text-muted-foreground font-light max-w-xl mx-auto">
+                  AI interviews that learn which questions actually work
+                </p>
               </div>
               {vapiError && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400">{vapiError}</p>
+                <div className="mb-6 p-4 bg-red-950/30 border border-red-900/50 rounded-xl backdrop-blur-sm">
+                  <p className="text-sm text-red-400">{vapiError}</p>
                 </div>
               )}
               <button
                 onClick={handleStartCall}
                 disabled={!!vapiError}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-lg"
+                className="px-10 py-5 bg-gradient-to-r from-white to-yellow-300 hover:from-white hover:to-yellow-200 disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold rounded-xl shadow-2xl glow glow-hover text-lg backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300"
               >
                 Start Call
               </button>
@@ -553,6 +557,9 @@ export default function Page() {
           questions={questions}
         />
       )}
+
+      {/* Vertical Divider */}
+      <div className="w-px bg-yellow-300/70 dark:bg-yellow-400/60 shadow-[0_0_10px_rgba(234,179,8,0.35)]" />
 
       {/* Right Panel: Questions List - Always Visible */}
       <QuestionList questions={questions} />
