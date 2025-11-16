@@ -45,11 +45,11 @@ export function CallPanel({
       <div className="space-y-1">
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-foreground">{label}</span>
-          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{score.toFixed(1)}</span>
+          <span className="text-sm font-semibold text-blue-400">{score.toFixed(1)}</span>
         </div>
-        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-muted/30 rounded-full h-2.5 overflow-hidden">
           <div
-            className="bg-gradient-to-r from-blue-500 to-purple-600 h-full transition-all duration-500"
+            className="bg-gradient-to-r from-blue-500/80 via-purple-500/80 to-purple-600/80 h-full transition-all duration-500 rounded-full shadow-sm"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -58,20 +58,20 @@ export function CallPanel({
   };
 
   return (
-    <div className="flex-1 border-r border-border bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 flex flex-col p-8">
+    <div className="flex-1 border-r border-border/50 bg-background flex flex-col p-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Interview Ranker</h1>
-        <p className="text-muted-foreground mt-2">Live question ranking simulation</p>
+      <div className="mb-10">
+        <h2 className="text-3xl font-bold text-foreground mb-2 tracking-tight">Live interview</h2>
+        <p className="text-muted-foreground text-base font-light">Real-time conversation and analysis</p>
       </div>
 
       {/* Content - Two Sections */}
       <div className="flex-1 flex flex-col gap-8">
         {/* Respondent Info */}
         <div>
-          <div className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
-              <span className="text-2xl font-bold text-white">A</span>
+            <div className="inline-flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white to-yellow-300 flex items-center justify-center shadow-lg glow border border-yellow-300/50">
+              <span className="text-2xl font-bold text-black">A</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">RESPONDENT</p>
@@ -82,7 +82,7 @@ export function CallPanel({
 
         <div className="flex-1 flex flex-col gap-6 overflow-y-auto">
           {/* Question Status Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+          <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Interview Status
             </p>
@@ -91,7 +91,7 @@ export function CallPanel({
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-foreground">Asked Questions</span>
-                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                <span className="text-sm font-semibold text-blue-400">
                   {askedQuestions.size}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function CallPanel({
                       return (
                         <div
                           key={id}
-                          className="flex items-start gap-2 text-sm p-2 rounded bg-slate-50 dark:bg-slate-700/50"
+                          className="flex items-start gap-2 text-sm p-3 rounded-xl bg-muted/30 border border-border/30 hover:bg-muted/50 transition-colors duration-200"
                         >
                           <span className="flex-shrink-0 mt-0.5">
                             {isAnalyzing ? (
@@ -141,7 +141,7 @@ export function CallPanel({
             <div className="border-t border-border pt-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-foreground">Answered Questions</span>
-                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                <span className="text-sm font-semibold text-green-400">
                   {answeredQuestions.size}
                 </span>
               </div>
@@ -154,7 +154,7 @@ export function CallPanel({
                       return (
                         <div
                           key={id}
-                          className="flex items-start gap-2 text-sm p-2 rounded bg-green-50 dark:bg-green-900/20"
+                          className="flex items-start gap-2 text-sm p-3 rounded-xl bg-green-950/20 border border-green-900/30 hover:bg-green-950/30 transition-colors duration-200"
                         >
                           <span className="flex-shrink-0 mt-0.5">
                             {isAnalyzing ? (
@@ -182,7 +182,7 @@ export function CallPanel({
           </div>
 
           {/* Current Question Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+          <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Current Question
             </p>
@@ -194,7 +194,7 @@ export function CallPanel({
                 <div className="mt-4 flex items-center gap-2">
                   <span className="inline-flex items-center gap-1">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    <span className="text-sm text-green-400 font-medium">
                       Listening for response...
                     </span>
                   </span>
@@ -213,7 +213,7 @@ export function CallPanel({
 
           {/* Analysis Results Section */}
           {showRating && ratingMetrics && lastQuestion && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border shadow-sm">
+            <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
                 Latest Analysis Result
               </p>
@@ -234,7 +234,7 @@ export function CallPanel({
                 <div className="mt-6 pt-4 border-t border-border">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-foreground">Overall Insight Score</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-2xl font-bold text-blue-400">
                       {ratingMetrics.overallScore.toFixed(1)}
                     </span>
                   </div>
@@ -245,10 +245,10 @@ export function CallPanel({
 
           {/* Analysis In Progress Indicator */}
           {ratingInProgress.size > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div className="bg-yellow-950/30 border border-yellow-900/50 rounded-xl p-4 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                <span className="text-sm font-medium text-yellow-300">
                   Analyzing {ratingInProgress.size} answer{ratingInProgress.size > 1 ? 's' : ''}...
                 </span>
               </div>
@@ -269,7 +269,7 @@ export function CallPanel({
           {onEndCall && (
             <button
               onClick={onEndCall}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+              className="px-8 py-3 bg-red-600/90 hover:bg-red-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-red-500/20 hover:border-red-400/30"
             >
               End Call
             </button>
